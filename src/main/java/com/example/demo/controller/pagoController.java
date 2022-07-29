@@ -183,63 +183,63 @@ public class pagoController {
 //	Aca deberia: ir a buscar a mercadoPago toda la data del pago, una vez la recupero, mando el post con la notificacion al notification url que me pasen de SIE
 	@CrossOrigin(origins = "*")
 	@PostMapping(value = "/notificacion_mercadoPago/{id}")
-	public ModelAndView respuestaLoca(@PathVariable(value="id") Long pago_id, @RequestBody NotificacionMP param1) {
+	public String respuestaLoca(@PathVariable(value="id") Long pago_id, @RequestBody NotificacionMP param1) {
 		
-		return new ModelAndView("redirect:"+"https://www.google.com.ar/");
+//		return new ModelAndView("redirect:"+"https://www.google.com.ar/");
 		
-//		RestTemplate rest = new RestTemplate();
-//		Pago pago = pagoService.findById(pago_id).get();
-//		ResponseEntity<RespuestaLocaMP> responseMP;
-//		ResponseEntity<String> response;
+		RestTemplate rest = new RestTemplate();
+		Pago pago = pagoService.findById(pago_id).get();
+		ResponseEntity<RespuestaLocaMP> responseMP;
+		ResponseEntity<String> response;
 //		
 //		Voy a buscar a mercado pago el pago que me llego en la notificacion
-//		try {
-//			URI uriMP = new URI("https://api.mercadopago.com/v1/payments/"+param1.getData().getId()+"?access_token=TEST-1016222742358593-062310-6eaddcc1b5893e037fa1281c4a6abe16-683211147");	
-//				
-//			responseMP = rest.getForEntity(uriMP, RespuestaLocaMP.class);
-//			System.out.println("Es la respuesta con el payment que me da la api de mercado pago, recibo bien el estado");
-//			System.out.println(responseMP.getBody().status);
-//			System.out.println(responseMP.getBody().status_detail);
-//			System.out.println(responseMP.getBody().id);
-//
+		try {
+			URI uriMP = new URI("https://api.mercadopago.com/v1/payments/"+param1.getData().getId()+"?access_token=TEST-1016222742358593-062310-6eaddcc1b5893e037fa1281c4a6abe16-683211147");	
+				
+			responseMP = rest.getForEntity(uriMP, RespuestaLocaMP.class);
+			System.out.println("Es la respuesta con el payment que me da la api de mercado pago, recibo bien el estado");
+			System.out.println(responseMP.getBody().status);
+			System.out.println(responseMP.getBody().status_detail);
+			System.out.println(responseMP.getBody().id);
+
 //			//Cuando recibo la respuesta de mercado pago primero creo una transacción
 //			//Se hizo una transaccion, con el estado que haya resultado		
-//			Date date = new Date();
-//			Transaccion trans = new Transaccion();
-//			
-//			trans.setIdPago(pago_id);
-//			trans.setEstado(responseMP.getBody().status);
-//			trans.setFechaEstado(date.getTime());
-//			trans.setIdTransaccion(""+responseMP.getBody().status);
-//			trans.setIdMedioPago((long) 1);
-//			transaccionService.save(trans);
-//			
+			Date date = new Date();
+			Transaccion trans = new Transaccion();
+			
+			trans.setIdPago(pago_id);
+			trans.setEstado(responseMP.getBody().status);
+			trans.setFechaEstado(date.getTime());
+			trans.setIdTransaccion(""+responseMP.getBody().status);
+			trans.setIdMedioPago((long) 1);
+			transaccionService.save(trans);
+			
 //			Ademas me fijo, si el estado de la transaccion fue aprobado, lo pongo al pago como pagado tambien
-//			if(responseMP.getBody().status.equals("approved"))
-//			{
-//				pago.setEstadoPago("pagado");				
-//				pago.setFechaEstado(date.getTime());
-//				pagoService.save(pago);
-//			}
-//
-//		
-//			//Despues de actualizar el pago en mi base, mando la respuesta al cliente (con el back url del pago)		
-//			URI uri = new URI(pago.getNotificationUrl());	
-//			
-//			//En la respuesta le envio el estado de la transaccion, y el id suyo de la transaccion, que yo relacione con el pago
-//			RespuestaLoca res = new RespuestaLoca();
-//			res.estado = trans.getEstado();
-//			res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
-//			
-//			response = rest.postForEntity(uri, res, String.class);
-//			System.out.println(response.getBody());
-//			
-//			
-//		}catch(Exception e){
-//			System.out.println(e.getMessage());
-//		}
+			if(responseMP.getBody().status.equals("approved"))
+			{
+				pago.setEstadoPago("pagado");				
+				pago.setFechaEstado(date.getTime());
+				pagoService.save(pago);
+			}
+
 		
-//		return "a";
+//			//Despues de actualizar el pago en mi base, mando la respuesta al cliente (con el back url del pago)		
+			URI uri = new URI(pago.getNotificationUrl());	
+			
+//			En la respuesta le envio el estado de la transaccion, y el id suyo de la transaccion, que yo relacione con el pago
+			RespuestaLoca res = new RespuestaLoca();
+			res.estado = trans.getEstado();
+			res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
+			
+			response = rest.postForEntity(uri, res, String.class);
+			System.out.println(response.getBody());
+			
+			
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		
+		return "a";
 	}
 	
 	
