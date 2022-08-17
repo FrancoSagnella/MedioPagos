@@ -17,6 +17,7 @@ public class Pago {
 	private Long idPagador;
 	private String idTransaccionConsumidor;
 	private String estadoPago;
+	private Boolean notificado;
 	private Long fechaEstado;
 	private Long fechaCreacion;
 	private Long precioTotal;
@@ -82,6 +83,12 @@ public class Pago {
 	}
 	public void setNotificationUrl(String notificationUrl) {
 		this.notificationUrl = notificationUrl;
+	}
+	public Boolean getNotificado() {
+		return notificado;
+	}
+	public void setNotificado(Boolean notificado) {
+		this.notificado = notificado;
 	}
 	
 }
