@@ -12,17 +12,19 @@ public class Pago {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	private String idConsumidor;
-	private Long idPagador;
-	private String idTransaccionConsumidor;
-	private String estadoPago;
-	private Boolean notificado;
-	private Long fechaEstado;
-	private Long fechaCreacion;
-	private Long precioTotal;
-	private String notificationUrl;
-	private String backUrl;
+	private Long id; //1
+	private String backUrl;//2
+	private String estadoPago;//3
+	private Long fechaCreacion;//4
+	private Long fechaEstado;//5
+	private String idConsumidor;//6
+	private Long idPagador;//7
+	private String idTransaccionConsumidor;//8
+	private String notificationUrl;	//9
+	private Long precioTotal;//10
+	private Boolean notificado;//11
+	private String idPreferencia;//12
+	
 	
 	public Long getId() {
 		return id;
@@ -89,6 +91,12 @@ public class Pago {
 	}
 	public void setNotificado(Boolean notificado) {
 		this.notificado = notificado;
+	}
+	public String getIdPreferencia() {
+		return idPreferencia;
+	}
+	public void setIdPreferencia(String idPreferencia) {
+		this.idPreferencia = idPreferencia;
 	}
 	
 }
