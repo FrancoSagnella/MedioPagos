@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,13 @@ public class PagoServiceImp implements PagoService{
 	@Transactional(readOnly = true)
 	public Optional<Pago> findByIdConsumidor(Long id) {
 		return pagoRepository.findByIdConsumidor(id);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public ArrayList<Pago> findByNotificado(Boolean notificado) {
+		
+		return pagoRepository.findByNotificado(notificado);
 	}
 	
 	@Override
