@@ -23,8 +23,8 @@ import com.example.demo.clasesDecidir.ItemDecidir;
 import com.example.demo.clasesDecidir.RespuestaPaymentDecidir;
 import com.example.demo.clasesDecidir.RespuestaTokenDecidir;
 import com.example.demo.clasesDecidir.SolicitudDecidir;
+import com.example.demo.clasesMercadoPago.RespuestaLoca;
 import com.example.demo.entities.Pago;
-import com.example.demo.entities.RespuestaLoca;
 import com.example.demo.entities.Transaccion;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.TransaccionService;
@@ -100,7 +100,8 @@ public class DecidirController {
 			
 //			AL ITEM A PAGAR LE AGREGO EL TOKEN Y SITE TRANSACTION
 			item.token = token.id;
-			item.site_transaction_id = "decidirPago-"+pago.getId()+"-"+new Date().getTime();
+//			item.site_transaction_id = "decidirPago-"+pago.getId()+"-"+new Date().getTime();
+			item.site_transaction_id = "decidirPago-"+pago.getId();
 			
 //			EJECUTO PAGO
 			HttpEntity<ItemDecidir> entity = new HttpEntity<>(item, headers);
