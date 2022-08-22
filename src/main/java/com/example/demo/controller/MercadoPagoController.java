@@ -157,6 +157,10 @@ public class MercadoPagoController {
 //			o con el cron)
 			if(pago.getEstadoPago().equals("approved"))
 			{		
+				
+				pago.setNotificado(true);
+				pagoService.save(pago);
+				
 				//Despues de actualizar el pago en mi base, mando la respuesta al cliente (con el notification url del pago)		
 				URI uri = new URI(pago.getNotificationUrl());	
 				
@@ -178,55 +182,6 @@ public class MercadoPagoController {
 		return "a";
 	}
 	
-//	CANCELAR PAGO: ACA ME LLEGA DESDE MI APP, SI EN LA PANTALLA PRINCIPAL TOCAN CANCELAR
-//	EN ESTE PUNTO TENGO QUE CANCELAR EL PAGO, Y NOTIFICAR AL NOTIFICATION URL DEL CONSUMIDOR Y REDIRIGIR AL BACK URL DEL CONSUMIDOR
-	@CrossOrigin(origins = "*")
-	@GetMapping(value = "/cancelar_pago/{id}")
-	public ResponseEntity<?> cancelar(@PathVariable(value = "id") Long pago_id) {
-
-//		Actualizo pago con CANCELADO
-		Date date = new Date();
-		Pago pago = pagoService.findById(pago_id).get();
-		pago.setEstadoPago("cancelado");				
-		pago.setFechaEstado(date.getTime());
-		pagoService.save(pago);
-		
-//		Notifico al cliente pago cancelado
-		try {
-			RestTemplate rest = new RestTemplate();
-			ResponseEntity<String> response;
-			//Despues de actualizar el pago en mi base, mando la respuesta al cliente (con el notification url del pago)		
-			URI uri = new URI(pago.getNotificationUrl());	
-			
-			//En la respuesta le envio el estado de la transaccion, y el id suyo de la transaccion, que yo relacione con el pago
-			RespuestaLoca res = new RespuestaLoca();
-			res.estado = pago.getEstadoPago();
-			res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
-			
-			response = rest.postForEntity(uri, res, String.class);
-			System.out.println(response.getBody());
-		}
-		catch(Exception e)
-		{
-			System.out.println(e.getMessage());
-		}
-		
-		//Aca ya se actualizo mi base y se mando respuesta al cliente, redirijo al back url del pago
-//		return new ModelAndView("redirect:"+pago.getBackUrl());
-		return new ResponseEntity<String>(pago.getBackUrl(), HttpStatus.OK);	
-	}
-	
-	
-	@CrossOrigin(origins = "*")
-	@GetMapping(value = "/confirmar_pago/{id}")
-	public ResponseEntity<?> confirmar(@PathVariable(value = "id") Long pago_id) {
-
-		Pago pago = pagoService.findById(pago_id).get();
-//		return new ModelAndView("redirect:"+pago.getBackUrl());
-		return new ResponseEntity<String>(pago.getBackUrl(), HttpStatus.OK);
-	}
-	
-	
 	
 //	ACA RECIBO RESPUESTA DE MERCADO PAGO, PERO EL REALIDAD TODO LO REFERENTE A NOTIFICAR EL APGO Y DEMAS YA LO HICE,
 //	ACA ESTOY LLEGANDO SOLAMENTE CUANDO SE HACE EL AUTORETURN O SE TOCA EL BOTON VOLVER EN MERCADO PAGO, LO UNICO QUE HACE ES REDIRIGIRME
@@ -242,7 +197,7 @@ public class MercadoPagoController {
 
 		//Aca ya se actualizo mi base y se mando respuesta al cliente, redirijo a mi app a la pantalla de resultado
 		if(status.equals("approved")){
-			return new ModelAndView("redirect:"+"http://localhost:4200/confirmacion/aprobado/"+pago_id);			
+			return new ModelAndView("redirect:"+"http://localhost:4200/confirmacion/aprobado/"+pago_id+"/0");			
 		}
 		else {
 			return new ModelAndView("redirect:"+"http://localhost:4200/principal/"+pago_id);

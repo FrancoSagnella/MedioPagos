@@ -8,4 +8,5 @@ public class SolicitudDecidir {
 	public String security_code;
 	public String card_holder_name;
 	public CardHolderIdentification card_holder_identification;
+	public Long medio_pago;
 }

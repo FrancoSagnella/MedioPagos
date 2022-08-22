@@ -23,7 +23,8 @@ public class Pago {
 	private Long precioTotal;
 	private String notificationUrl;
 	private String backUrl;
-	private String idPreferencia;
+//	private String idPreferencia;
+	private Long fechaVencimiento;
 	
 	public Long getId() {
 		return id;
@@ -91,11 +92,17 @@ public class Pago {
 	public void setNotificado(Boolean notificado) {
 		this.notificado = notificado;
 	}
-	public String getIdPreferencia() {
-		return idPreferencia;
+//	public String getIdPreferencia() {
+//		return idPreferencia;
+//	}
+//	public void setIdPreferencia(String idPreferencia) {
+//		this.idPreferencia = idPreferencia;
+//	}
+	public Long getFechaVencimiento() {
+		return fechaVencimiento;
 	}
-	public void setIdPreferencia(String idPreferencia) {
-		this.idPreferencia = idPreferencia;
+	public void setFechaVencimiento(Long fechaVencimiento) {
+		this.fechaVencimiento = fechaVencimiento;
 	}
 	
 }

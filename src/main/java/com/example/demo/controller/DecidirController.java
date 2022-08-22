@@ -7,10 +7,12 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.clasesDecidir.ItemDecidir;
+import com.example.demo.clasesDecidir.MedioPago;
 import com.example.demo.clasesDecidir.RespuestaPaymentDecidir;
 import com.example.demo.clasesDecidir.RespuestaTokenDecidir;
 import com.example.demo.clasesDecidir.SolicitudDecidir;
@@ -59,7 +62,7 @@ public class DecidirController {
 			
 //			ARMO EL ITEM DE DECIDIR
 			ItemDecidir item = new ItemDecidir();
-				item.payment_method_id = (long) 1;
+				item.payment_method_id = resumen.medio_pago;
 				//RECORTO LOS PRIMEROS 6 NUMEROS DE LA TARJETA
 				item.bin = resumen.card_number.substring(0, 6);
 				item.amount = oPago.get().getPrecioTotal();
@@ -100,8 +103,8 @@ public class DecidirController {
 			
 //			AL ITEM A PAGAR LE AGREGO EL TOKEN Y SITE TRANSACTION
 			item.token = token.id;
-//			item.site_transaction_id = "decidirPago-"+pago.getId()+"-"+new Date().getTime();
-			item.site_transaction_id = "decidirPago-"+pago.getId();
+			item.site_transaction_id = "decidirPago-"+pago.getId()+"-"+new Date().getTime();
+//			item.site_transaction_id = "decidirPago-"+pago.getId();
 			
 //			EJECUTO PAGO
 			HttpEntity<ItemDecidir> entity = new HttpEntity<>(item, headers);
@@ -123,6 +126,9 @@ public class DecidirController {
 //			SI EL ESTADO DEL PAGO ES APROBADO, SE NOTIFICA EL PAGO, SI ES RECHAZADO SE VA A RETORNAR EL ERROR PARA REINTENTAR
 			if(resPayment.getBody().status.equals("approved"))
 			{
+				pago.setNotificado(true);
+				pagoService.save(pago);
+				
 				URI uri = new URI(pago.getNotificationUrl());	
 				
 				RespuestaLoca res = new RespuestaLoca();
@@ -156,4 +162,20 @@ public class DecidirController {
 		}
 	}
 	
+	
+	
+	@CrossOrigin(origins = "*")
+	@GetMapping(value = "/payment-method/{id}")
+	public ResponseEntity<?> getMedios(@PathVariable(value = "id") Long medioId){
+		
+		RestTemplate rest = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.set("apikey", "4ae76f00234843d1af5994ed4674fd76");
+
+		HttpEntity<Void> entity = new HttpEntity<>(headers);
+		ResponseEntity<MedioPago[]> resPayment = rest.exchange("https://developers.decidir.com/api/v2/payment-methods/1", HttpMethod.GET, entity, MedioPago[].class);
+
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
+	}
 }
