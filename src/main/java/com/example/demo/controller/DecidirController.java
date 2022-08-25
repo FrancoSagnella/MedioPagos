@@ -29,6 +29,8 @@ import com.example.demo.clasesDecidir.SolicitudDecidir;
 import com.example.demo.clasesMercadoPago.RespuestaLoca;
 import com.example.demo.entities.Pago;
 import com.example.demo.entities.Transaccion;
+import com.example.demo.middlewares.MiddlewareException;
+import com.example.demo.middlewares.Middlewares;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.TransaccionService;
 
@@ -36,6 +38,8 @@ import com.example.demo.service.TransaccionService;
 @RequestMapping(value = "/api/pagos/decidir")
 public class DecidirController {
 
+	private Middlewares middleware = new Middlewares();
+	
 	@Autowired
 	private PagoService pagoService;
 	
@@ -48,8 +52,12 @@ public class DecidirController {
 		
 //		BUSCO PAGO ASOCIADO EN LA BBDD
 		Optional<Pago> oPago = pagoService.findById(pagoId);
-				
+		
 		try {
+			//MIDDLEWARE VALIDA VENCIMIENTO TIRA MIDDLEWAREEXCEPTION
+			middleware.verificarVencimiento(oPago.get());
+			middleware.verificarNotificado(oPago.get());
+				
 //			GENERO TOKEN
 			RestTemplate rest = new RestTemplate();
 			HttpHeaders headers = new HttpHeaders();
@@ -79,7 +87,12 @@ public class DecidirController {
 			
 			
 //		SE MANEJAN LOS ERRORES DE AUTORIZACION AL CREAR TOKEN
-		}catch(HttpClientErrorException e)
+		}
+		catch(MiddlewareException e)
+		{
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.customError());
+		}
+		catch(HttpClientErrorException e)
 		{
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
 		}

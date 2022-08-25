@@ -1,10 +1,13 @@
 package com.example.demo.controller;
 
 import java.net.URI;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,11 +29,14 @@ import com.example.demo.clasesMercadoPago.RespuestaLoca;
 import com.example.demo.clasesMercadoPago.RespuestaLocaMP;
 import com.example.demo.entities.Pago;
 import com.example.demo.entities.Transaccion;
+import com.example.demo.middlewares.MiddlewareException;
+import com.example.demo.middlewares.Middlewares;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.TransaccionService;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
+import com.mercadopago.client.preference.PreferencePaymentMethodsRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
@@ -40,6 +46,8 @@ import com.mercadopago.resources.preference.Preference;
 @RequestMapping("/api/pagos/MercadoPago")
 public class MercadoPagoController {
 
+	private Middlewares middleware = new Middlewares();
+	
 	@Autowired
 	private PagoService pagoService;
 	
@@ -54,9 +62,18 @@ public class MercadoPagoController {
 	@PostMapping(value = "/creates/{id}")
 	public ResponseEntity<?> create(@PathVariable(value = "id") Long pago_id, @RequestBody Item item) throws MPException, MPApiException{
 		
-		//Ahora no recupero el pago ni le modifico nada, porque hasta que mercadopago no me mande respuesta, no se realizo ninguna transaccion
-		//yo recien registro las transacciones una vez me responde y tengo constancia de que se realizo		
+//		BUSCO PAGO ASOCIADO EN LA BBDD
+		Optional<Pago> oPago = pagoService.findById(pago_id);
 		
+		//MIDDLEWARE VALIDA VENCIMIENTO
+		try {
+			middleware.verificarVencimiento(oPago.get());
+			middleware.verificarNotificado(oPago.get());
+		}
+		catch(MiddlewareException e)
+		{
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.customError());
+		}
 		
 		// Directamente creo la preferencia y demas
 		Preference preference = new Preference();
@@ -85,9 +102,20 @@ public class MercadoPagoController {
 			       .build();
 		
 		OffsetDateTime dateTimeNow = OffsetDateTime.now();	
-		OffsetDateTime dateTimeTo = dateTimeNow.plusHours(5);
-//			System.out.println(dateTimeNow);
-//			System.out.println(dateTimeTo);
+		
+		//LE PONGO DE VENCIMIENTO A LA PREFERENCIA, EL MISMO VENCIMIENTO QUE MI PAGO
+		OffsetDateTime dateTimeTo = OffsetDateTime.ofInstant(new Timestamp(oPago.get().getFechaVencimiento()).toInstant(), ZoneId.of("-3"));
+		
+		
+		//La ORTRA ES ACTUALIZO EL VENCIMIENTO DE MI PAGO, CON EL VENCIMIENTO QUE LE PUSE EN MP
+//		OffsetDateTime dateTimeTo = dateTimeNow.plusMinutes(1);
+//		
+//		oPago.get().setFechaVencimiento(Timestamp.from(dateTimeTo.toInstant()).getTime());
+//		pagoService.save(oPago.get());
+		
+//		System.out.println("offset: "+dateTimeTo);
+//		System.out.println("timestamp: "+oPago.get().getFechaVencimiento());
+		
 		
 		try {
 			//Con el binaryMode, solo recibo aprobado o rechazado, no me puede quedar pendiente			
@@ -101,6 +129,7 @@ public class MercadoPagoController {
 					.expirationDateFrom(dateTimeNow)
 					.expirationDateTo(dateTimeTo)
 					.externalReference(""+pago_id)
+					.paymentMethods( PreferencePaymentMethodsRequest.builder().installments(1).build() )
 					.build();
 			preference =client.create(request);
 			return new ResponseEntity<>(preference,HttpStatus.OK);
@@ -126,6 +155,14 @@ public class MercadoPagoController {
 		Pago pago = pagoService.findById(pago_id).get();
 		ResponseEntity<RespuestaLocaMP> responseMP;
 		ResponseEntity<String> response;
+		
+		try {
+			middleware.verificarNotificado(pago);
+		}
+		catch(MiddlewareException e)
+		{
+			return "Ya fue notificado";
+		}
 //		
 //		Voy a buscar a mercado pago el pago que me llego en la notificacion
 		try {

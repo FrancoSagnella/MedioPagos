@@ -25,6 +25,8 @@ import com.example.demo.entities.Consumidor;
 import com.example.demo.entities.Pagador;
 import com.example.demo.entities.Pago;
 import com.example.demo.entities.Producto;
+import com.example.demo.middlewares.MiddlewareException;
+import com.example.demo.middlewares.Middlewares;
 import com.example.demo.service.ConsumidorService;
 import com.example.demo.service.PagadorService;
 import com.example.demo.service.PagoService;
@@ -33,6 +35,8 @@ import com.example.demo.service.ProductoService;
 @RestController
 @RequestMapping("/api/pagos")
 public class pagoController {
+	
+	private Middlewares middleware = new Middlewares();
 	
 	@Autowired
 	private PagoService pagoService;
@@ -90,6 +94,16 @@ public class pagoController {
 			return ResponseEntity.notFound().build();
 		}
 		
+		//MIDDLEWARE VALIDA VENCIMIENTO, SI YA FUE NOTIFICADO O NO
+		try {
+			middleware.verificarVencimiento(oPago.get());
+			middleware.verificarNotificado(oPago.get());
+		}catch(MiddlewareException e)
+		{
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.customError());
+		}
+
+		
 		Optional<Consumidor> oConsumidor = consumidorService.findByToken(oPago.get().getIdConsumidor());
 		Iterable<Producto> oProdutcos = productoService.findAllByPago(oPago.get().getId());
 		Optional<Pagador> oPagador = pagadorService.findById(oPago.get().getIdPagador());
@@ -120,13 +134,19 @@ public class pagoController {
 //		Actualizo pago con CANCELADO
 		Date date = new Date();
 		Pago pago = pagoService.findById(pago_id).get();
-		pago.setEstadoPago("cancelado");				
-		pago.setFechaEstado(date.getTime());
-		pago.setNotificado(true);
-		pagoService.save(pago);
 		
-//		Notifico al cliente pago cancelado
 		try {
+			//MIDDLEWARE VALIDA VENCIMIENTO TIRA MIDDLEWAREEXCEPTION
+			middleware.verificarVencimiento(pago);
+			middleware.verificarNotificado(pago);
+
+			
+			pago.setEstadoPago("cancelado");				
+			pago.setFechaEstado(date.getTime());
+			pago.setNotificado(true);
+			pagoService.save(pago);
+			
+	//		Notifico al cliente pago cancelado
 			RestTemplate rest = new RestTemplate();
 			ResponseEntity<String> response;
 			//Despues de actualizar el pago en mi base, mando la respuesta al cliente (con el notification url del pago)		
@@ -139,6 +159,10 @@ public class pagoController {
 			
 			response = rest.postForEntity(uri, res, String.class);
 			System.out.println(response.getBody());
+		}
+		catch(MiddlewareException e)
+		{
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.customError());
 		}
 		catch(Exception e)
 		{
@@ -160,12 +184,11 @@ public class pagoController {
 	public ResponseEntity<?> confirmar(@PathVariable(value = "id") Long pago_id) {
 
 		Pago pago = pagoService.findById(pago_id).get();
-//		return new ModelAndView("redirect:"+pago.getBackUrl());
-//		return new ResponseEntity<String>(pago.getBackUrl(), HttpStatus.OK);
 		
 		Map<String, String> myMap = new HashMap<>();
 		myMap.put("url", pago.getBackUrl());
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
 	}
+
 }
