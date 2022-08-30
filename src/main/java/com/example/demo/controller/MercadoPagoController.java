@@ -249,4 +249,16 @@ public class MercadoPagoController {
 	public String respuestaLoca(@RequestBody RespuestaLoca param1) {
 		return "retorno del consumidor al recibir la info que le mande, le llego piola";
 	}
+	
+	
+	
+	
+	
+	
+	@CrossOrigin(origins = "*")
+	@PostMapping(value = "/process_payment")
+	public ResponseEntity<?> pagoAPI(@RequestBody RespuestaLoca param)
+	{
+		return new ResponseEntity<String>("Retorno", HttpStatus.OK);	
+	}
 }
