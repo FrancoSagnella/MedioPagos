@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.example.demo.entities.Pago;
 @Repository
 public interface PagoRepository extends JpaRepository<Pago, Long>{
-	Optional<Pago> findByIdConsumidor(Long idConsumidor);
-	Iterable<Pago> findAllByIdConsumidor(Long idConsumidor);
+	Optional<Pago> findByIdConsumidor(String idConsumidor);
+	ArrayList<Pago> findAllByIdConsumidor(String idConsumidor);
 	ArrayList<Pago> findByNotificado(Boolean notificado);
 }

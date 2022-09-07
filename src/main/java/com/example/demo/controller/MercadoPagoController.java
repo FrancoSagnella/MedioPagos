@@ -178,7 +178,7 @@ public class MercadoPagoController {
 			trans.setIdPago(pago_id);
 			trans.setEstado(responseMP.getBody().status);
 			trans.setFechaEstado(date.getTime());
-			trans.setIdTransaccion(""+responseMP.getBody().status);
+			trans.setIdTransaccion(responseMP.getBody().id);
 			trans.setIdMedioPago((long) 1);
 			transaccionService.save(trans);
 			

@@ -16,7 +16,7 @@ public class Transaccion {
 	private Long idPago;
 	private String estado;
 	private Long fechaEstado;
-	private String idTransaccion;
+	private Long idTransaccion;
 	private Long idMedioPago;
 
 	public Long getId() {
@@ -43,10 +43,10 @@ public class Transaccion {
 	public void setFechaEstado(Long fecha_estado) {
 		this.fechaEstado = fecha_estado;
 	}
-	public String getIdTransaccion() {
+	public Long getIdTransaccion() {
 		return idTransaccion;
 	}
-	public void setIdTransaccion(String id_transaccion) {
+	public void setIdTransaccion(Long id_transaccion) {
 		this.idTransaccion = id_transaccion;
 	}
 	public Long getIdMedioPago() {
