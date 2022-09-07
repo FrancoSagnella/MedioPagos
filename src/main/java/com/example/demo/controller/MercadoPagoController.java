@@ -33,6 +33,7 @@ import com.example.demo.middlewares.MiddlewareException;
 import com.example.demo.middlewares.Middlewares;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.TransaccionService;
+import com.mercadopago.client.payment.PaymentRefundClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
@@ -40,6 +41,7 @@ import com.mercadopago.client.preference.PreferencePaymentMethodsRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.PaymentRefund;
 import com.mercadopago.resources.preference.Preference;
 
 @RestController
@@ -260,5 +262,31 @@ public class MercadoPagoController {
 	public ResponseEntity<?> pagoAPI(@RequestBody RespuestaLoca param)
 	{
 		return new ResponseEntity<String>("Retorno", HttpStatus.OK);	
+	}
+	
+	
+	
+	//Devoluciones
+	@CrossOrigin(origins = "*")
+	@GetMapping(value = "/reembolsar_pago/{id}")
+	public void reembolso (@PathVariable(value = "id") Long pago_id) {
+
+        
+		PaymentRefundClient client = new PaymentRefundClient();
+
+		try {
+			
+			PaymentRefund respuesta = client.refund(pago_id);
+			
+			System.out.println(respuesta.getStatus().toString());
+			System.out.println(respuesta.getId().toString());
+			System.out.println(respuesta.getPaymentId().toString());
+		}
+		catch(Exception e)
+		{
+			System.out.println(e.getMessage());
+		}
+		
+
 	}
 }
