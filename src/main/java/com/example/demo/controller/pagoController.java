@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,18 +20,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.demo.clasesDecidir.RequestDevolucionDecidir;
 import com.example.demo.clasesMercadoPago.RespuestaLoca;
 import com.example.demo.clasesMercadoPago.Resumen;
 import com.example.demo.entities.Consumidor;
 import com.example.demo.entities.Pagador;
 import com.example.demo.entities.Pago;
 import com.example.demo.entities.Producto;
+import com.example.demo.entities.Transaccion;
 import com.example.demo.middlewares.MiddlewareException;
 import com.example.demo.middlewares.Middlewares;
 import com.example.demo.service.ConsumidorService;
 import com.example.demo.service.PagadorService;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.ProductoService;
+import com.example.demo.service.TransaccionService;
 
 @RestController
 @RequestMapping("/api/pagos")
@@ -49,7 +53,10 @@ public class pagoController {
 	
 	@Autowired
 	private PagadorService pagadorService;
-	
+		
+	@Autowired
+	private TransaccionService transaccionService;
+
 	// Create a new pago
 	@CrossOrigin(origins = "*")
 	@PostMapping
@@ -189,6 +196,94 @@ public class pagoController {
 		myMap.put("url", pago.getBackUrl());
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
+	}
+
+
+		// DEVOLUCIONES
+	//ENDPOINT PARA QUE CONSUMA SIE U OTRA APP
+	//EN REALIDAD ESTO NO TENDRIA QUE ESTAR ACA, ESTO TENDRIA QUE ESTAR EN EL CONTROLADOR PRINCIPAL
+	//QUE SE BUSQUE LA ULTIMA TRANSACCION (LA APROBADA) Y DEPENDIENDO SI ES DE MP O DE DECIDIR VA AL CORRESPONDIENTE CONTROLADOR.
+	@CrossOrigin(origins = "*")
+	@PostMapping(value = "/devolucion")
+	public ResponseEntity<?> devolucionPago(@RequestBody RequestDevolucionDecidir request){
+		
+		//HABRIA QUE AGREGAR TODAS LAS VALIDACIONES NECESARIAS
+		//1- SI ESTA APROBADO/NOTIFICADO
+		//2- SI EXISTE EL TOKEN
+		//3- SI EXISTE EL PAGO CON ESTE ID TRANSACCION
+		//4- SI EL PAGO TIENE TRANSACCIONES
+		//5- DE TENER TRANSACCIONES, SI TIENE UNA APROBADA
+		//6- QUE NO TENGA MAS DE UNA APROBADA
+		//7- VER QUE LA ULTIMA TRANSACCION SEA REALMENTE LA APROBADA (ENTIENDO QUE NO HAY CHANCES DE QUE PASE)
+		//ETC.
+
+		
+		//Obtengo el pago asociado
+		ArrayList<Pago> pagos = pagoService.findAllByIdConsumidor(request.tokenConsumidor);
+		Pago miPago = new Pago();
+		
+		for(Pago pago : pagos)
+		{
+			Boolean a = pago.getIdTransaccionConsumidor().equals(request.idTransaccion);
+			if(a)
+			{
+				miPago = pago;
+				break;
+			}
+		}
+	
+		System.out.println(miPago.getId());
+		
+		//Con el pago ya identificado, obtengo la utima transaccion (la aprobada)
+		Iterable<Transaccion> transacciones = transaccionService.findAllByIdPago(miPago.getId());
+		Transaccion miTransaccion = new Transaccion();
+		Long maxTimestamp = (long) 0;
+		
+		for(Transaccion transaccion : transacciones)
+		{
+			if(transaccion.getFechaEstado() > maxTimestamp)
+			{
+				maxTimestamp = transaccion.getFechaEstado();
+				miTransaccion = transaccion;
+			}
+		}
+		
+		System.out.println(miTransaccion.getIdTransaccion());
+		
+		//Y ACA DEPENDIENDO EL MEDIO DE PAGO DE LA ULTIMA TRANSACCION, SE EJECUTA LA DEVOLUCION POR DECIDIR O POR MP
+		ResponseEntity<?> res = ResponseEntity.status(HttpStatus.CONFLICT).body("a");
+		switch(miTransaccion.getIdMedioPago().intValue())
+		{
+			//Mercado Pago
+			case 1:
+				res = MercadoPagoController.reembolso(miTransaccion.getIdTransaccion());
+				break;
+			//Decidir
+			case 2:
+				res = DecidirController.devolucionPago(miTransaccion.getIdTransaccion());
+				break;
+		}
+		
+		
+		//Dependiendo del estatus de res, actualizo bbdd o devuelvo directamente error
+		//Quizas habria que standarizar la respuesta que le doy a SIE, en vez de responder directamente lo que me responden los servicios de pago
+		if(res.getStatusCode() == HttpStatus.ACCEPTED)
+		{
+//			CREO TRANSACCION Y ACTUALIZO PAGO
+			Transaccion transaccion = new Transaccion();
+			transaccion.setIdMedioPago(miTransaccion.getIdMedioPago());
+			transaccion.setIdPago(miPago.getId());
+			transaccion.setIdTransaccion(miTransaccion.getIdTransaccion());
+			transaccion.setEstado("annuled");
+			transaccion.setFechaEstado(new Date().getTime());
+			transaccionService.save(transaccion);
+			
+			miPago.setEstadoPago("annuled");
+			miPago.setFechaEstado(transaccion.getFechaEstado());
+			pagoService.save(miPago);
+		}
+
+		return res;
 	}
 
 }

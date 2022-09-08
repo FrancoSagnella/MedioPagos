@@ -267,16 +267,15 @@ public class MercadoPagoController {
 	
 	
 	//Devoluciones
-	@CrossOrigin(origins = "*")
-	@GetMapping(value = "/reembolsar_pago/{id}")
-	public void reembolso (@PathVariable(value = "id") Long pago_id) {
+	public static ResponseEntity<?> reembolso (Long pago_id) {
 
         
 		PaymentRefundClient client = new PaymentRefundClient();
-
+		PaymentRefund respuesta;
+		
 		try {
 			
-			PaymentRefund respuesta = client.refund(pago_id);
+			respuesta = client.refund(pago_id);
 			
 			System.out.println(respuesta.getStatus().toString());
 			System.out.println(respuesta.getId().toString());
@@ -285,8 +284,11 @@ public class MercadoPagoController {
 		catch(Exception e)
 		{
 			System.out.println(e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 		
-
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(respuesta);
+		
 	}
+	
 }

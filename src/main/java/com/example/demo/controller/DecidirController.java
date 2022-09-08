@@ -194,84 +194,28 @@ public class DecidirController {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 	}
 
-	//ENDPOINT PARA QUE CONSUMA SIE U OTRA APP
-	//EN REALIDAD ESTO NO TENDRIA QUE ESTAR ACA, ESTO TENDRIA QUE ESTAR EN EL CONTROLADOR PRINCIPAL
-	//QUE SE BUSQUE LA ULTIMA TRANSACCION (LA APROBADA) Y DEPENDIENDO SI ES DE MP O DE DECIDIR VA AL CORRESPONDIENTE CONTROLADOR.
-	@CrossOrigin(origins = "*")
-	@PostMapping(value = "/devolucion")
-	public ResponseEntity<?> devolucionPago(@RequestBody RequestDevolucionDecidir request){
+	//Devolucion de pago decidir
+	public static ResponseEntity<?> devolucionPago(Long decidirId){
 		
-		//HABRIA QUE AGREGAR TODAS LAS VALIDACIONES NECESARIAS
-		//1- SI ESTA APROBADO/NOTIFICADO
-		//2- SI EXISTE EL TOKEN
-		//3- SI EXISTE EL PAGO CON ESTE ID TRANSACCION
-		//4- SI EL PAGO TIENE TRANSACCIONES
-		//5- DE TENER TRANSACCIONES, SI TIENE UNA APROBADA
-		//6- QUE NO TENGA MAS DE UNA APROBADA
-		//7- VER QUE LA ULTIMA TRANSACCION SEA REALMENTE LA APROBADA (ENTIENDO QUE NO HAY CHANCES DE QUE PASE)
-		//ETC.
-
+		//		EJECUTO LA DEVOUCION
+				RestTemplate rest = new RestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(MediaType.APPLICATION_JSON);
+				headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
+				
+				ResponseEntity<?> resPayment;
+				
+				try {
+					
+					HttpEntity<?> entity = new HttpEntity<>("{}", headers);
+					resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments/"+decidirId+"/refunds", entity, RespuestaPaymentDecidir.class);
+					
+				}catch(HttpClientErrorException e)
+				{
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
+				}
 		
-		//TODA ESTA PRIMER PARTE TENDRIA QUE HACERSE EN COMUN
-		//Obtengo el pago asociado
-		ArrayList<Pago> pagos = pagoService.findAllByIdConsumidor(request.tokenConsumidor);
-		Long idPago = (long) 0;
-		
-		for(Pago pago : pagos)
-		{
-			Boolean a = pago.getIdTransaccionConsumidor().equals(request.idTransaccion);
-			if(a)
-			{
-				idPago = pago.getId();
-				break;
+				
+				return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 			}
-		}
-	
-		System.out.println(idPago);
-		//Con el pago ya identificado, obtengo la utima transaccion (la aprobada)
-		Iterable<Transaccion> transacciones = transaccionService.findAllByIdPago(idPago);
-		Long maxTimestamp = (long) 0;
-		Long transId = (long) 0;
-		Long decidirId = (long) 0;
-		
-		for(Transaccion transaccion : transacciones)
-		{
-			if(transaccion.getFechaEstado() > maxTimestamp)
-			{
-				maxTimestamp = transaccion.getFechaEstado();
-				transId = transaccion.getId();
-				decidirId = transaccion.getIdTransaccion();
-			}
-		}
-		
-		System.out.println(decidirId);
-		//Y ACA DEPENDIENDO EL MEDIO DE PAGO DE LA ULTIMA TRANSACCION, SE EJECUTA LO QUE ESTA ABAJO O LO NECESARIOP PARA MP
-		
-		
-		
-//		EJECUTO LA DEVOUCION
-		RestTemplate rest = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
-		
-		ResponseEntity<?> resPayment;
-		
-		try {
-			
-			HttpEntity<?> entity = new HttpEntity<>("{}", headers);
-			resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments/"+decidirId+"/refunds", entity, RespuestaPaymentDecidir.class);
-			
-		}catch(HttpClientErrorException e)
-		{
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
-		}
-
-		//SI FUNCO TODO BIEN, DEBERIA ACTUALIZAR EL ESTADO DEL PAGO A ANULADO
-		//Y, O ACTUALIZAR EL ESTADO DE LA TRANSACCION A ANULADO, O CREAR UNA TRANSACCION NUEVA QUE ESTE ANULADA.
-		
-		//DESPUES CONTESTO CON EL RESULTADO, Y QUE EL CONSUMIDOR HAGA LO QUE TENGA QU EHACER CON ESO, EN TEORIA YA DECOLCIO LA PLATA
-		
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
-	}
 }
