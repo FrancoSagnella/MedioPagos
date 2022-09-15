@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.clasesDecidir.ItemDecidir;
 import com.example.demo.clasesDecidir.MedioPago;
+import com.example.demo.clasesDecidir.RequestDevolucionDecidir;
 import com.example.demo.clasesDecidir.RespuestaPaymentDecidir;
 import com.example.demo.clasesDecidir.RespuestaTokenDecidir;
 import com.example.demo.clasesDecidir.SolicitudDecidir;
@@ -127,7 +129,7 @@ public class DecidirController {
 			Transaccion transaccion = new Transaccion();
 			transaccion.setIdMedioPago((long) 2);
 			transaccion.setIdPago(pago.getId());
-			transaccion.setIdTransaccion(""+resPayment.getBody().id);
+			transaccion.setIdTransaccion(resPayment.getBody().id);
 			transaccion.setEstado(resPayment.getBody().status);
 			transaccion.setFechaEstado(new Date().getTime());
 			transaccionService.save(transaccion);
@@ -191,4 +193,29 @@ public class DecidirController {
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 	}
+
+	//Devolucion de pago decidir
+	public static ResponseEntity<?> devolucionPago(Long decidirId){
+		
+		//		EJECUTO LA DEVOUCION
+				RestTemplate rest = new RestTemplate();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(MediaType.APPLICATION_JSON);
+				headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
+				
+				ResponseEntity<?> resPayment;
+				
+				try {
+					
+					HttpEntity<?> entity = new HttpEntity<>("{}", headers);
+					resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments/"+decidirId+"/refunds", entity, RespuestaPaymentDecidir.class);
+					
+				}catch(HttpClientErrorException e)
+				{
+					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
+				}
+		
+				
+				return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
+			}
 }

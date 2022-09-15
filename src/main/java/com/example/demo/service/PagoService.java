@@ -8,9 +8,9 @@ import com.example.demo.entities.Pago;
 public interface PagoService {
 
 	public Iterable<Pago> findAll();
-	public Iterable<Pago> findAllByIdConsumidor(Long empresa);
+	public ArrayList<Pago> findAllByIdConsumidor(String empresa);
 	public Optional<Pago> findById(Long id);
-	public Optional<Pago> findByIdConsumidor(Long empresa);
+	public Optional<Pago> findByIdConsumidor(String empresa);
 	public ArrayList<Pago> findByNotificado(Boolean notificado);
 	public Pago save(Pago pago);
 	public void deleteById(Long id);
