@@ -19,6 +19,7 @@ public class Producto {
 	private String nombre_producto;
 	private Long cantidad;
 	private Long precio_unitario;
+	private String numero_sap;
 	
 	public Long getId() {
 		return id;
@@ -50,6 +51,11 @@ public class Producto {
 	public void setPrecio_unitario(Long precio_unitario) {
 		this.precio_unitario = precio_unitario;
 	}
-	
+	public String getNumero_sap() {
+		return numero_sap;
+	}
+	public void setNumero_sap(String numero_sap) {
+		this.numero_sap = numero_sap;
+	}
 	
 }
