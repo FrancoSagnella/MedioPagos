@@ -1,9 +1,9 @@
 package com.example.demo.controller;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,14 +23,14 @@ import org.springframework.web.client.RestTemplate;
 import com.example.demo.clasesDecidir.RequestDevolucionDecidir;
 import com.example.demo.clasesMercadoPago.RespuestaLoca;
 import com.example.demo.clasesMercadoPago.Resumen;
-import com.example.demo.entities.Consumidor;
+import com.example.demo.entities.Aplicacion;
 import com.example.demo.entities.Pagador;
 import com.example.demo.entities.Pago;
 import com.example.demo.entities.Producto;
 import com.example.demo.entities.Transaccion;
 import com.example.demo.middlewares.MiddlewareException;
 import com.example.demo.middlewares.Middlewares;
-import com.example.demo.service.ConsumidorService;
+import com.example.demo.service.AplicacionService;
 import com.example.demo.service.PagadorService;
 import com.example.demo.service.PagoService;
 import com.example.demo.service.ProductoService;
@@ -49,14 +49,14 @@ public class pagoController {
 	private ProductoService productoService;
 	
 	@Autowired
-	private ConsumidorService consumidorService;
+	private AplicacionService consumidorService;
 	
 	@Autowired
 	private PagadorService pagadorService;
-		
+	
 	@Autowired
 	private TransaccionService transaccionService;
-
+	
 	// Create a new pago
 	@CrossOrigin(origins = "*")
 	@PostMapping
@@ -96,11 +96,12 @@ public class pagoController {
 	@CrossOrigin(origins = "*")
 	@GetMapping("/{id}")
 	public ResponseEntity<?> read (@PathVariable(value = "id") Long pagoId){
+
 		Optional<Pago> oPago = pagoService.findById(pagoId);
 		if(!oPago.isPresent()) {
 			return ResponseEntity.notFound().build();
 		}
-		
+
 		//MIDDLEWARE VALIDA VENCIMIENTO, SI YA FUE NOTIFICADO O NO
 		try {
 			middleware.verificarVencimiento(oPago.get());
@@ -111,24 +112,24 @@ public class pagoController {
 		}
 
 		
-		Optional<Consumidor> oConsumidor = consumidorService.findByToken(oPago.get().getIdConsumidor());
+		Optional<Aplicacion> oConsumidor = consumidorService.findByToken(oPago.get().getIdConsumidor());
 		Iterable<Producto> oProdutcos = productoService.findAllByPago(oPago.get().getId());
 		Optional<Pagador> oPagador = pagadorService.findById(oPago.get().getIdPagador());
-		
+
 		Resumen resumen = new Resumen();
 		resumen.setPago(oPago.get());
 		resumen.setConsumidor(oConsumidor.get());
 		resumen.setProducto((List<Producto>) oProdutcos);
 		resumen.setPagador(oPagador.get());
-		
+
 		return ResponseEntity.ok(resumen); 
 	}
 	
 	@CrossOrigin(origins = "*")
 	@PostMapping("/consumidor")
-	public ResponseEntity<?> create (@RequestBody Consumidor resumen){
+	public ResponseEntity<?> create (@RequestBody Aplicacion resumen){
 		
-		Consumidor pago = consumidorService.save(resumen);
+		Aplicacion pago = consumidorService.save(resumen);
 		return ResponseEntity.status(HttpStatus.CREATED).body(pago);
 	}
 	
@@ -197,9 +198,13 @@ public class pagoController {
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
 	}
-
-
-		// DEVOLUCIONES
+	
+	
+	
+	
+	
+	
+	// DEVOLUCIONES
 	//ENDPOINT PARA QUE CONSUMA SIE U OTRA APP
 	//EN REALIDAD ESTO NO TENDRIA QUE ESTAR ACA, ESTO TENDRIA QUE ESTAR EN EL CONTROLADOR PRINCIPAL
 	//QUE SE BUSQUE LA ULTIMA TRANSACCION (LA APROBADA) Y DEPENDIENDO SI ES DE MP O DE DECIDIR VA AL CORRESPONDIENTE CONTROLADOR.
@@ -284,6 +289,30 @@ public class pagoController {
 		}
 
 		return res;
+	}
+	
+	@CrossOrigin(origins = "*")
+	@GetMapping(value = "/getPago/{id}")
+	public ResponseEntity<?> getDataPago(@PathVariable(value = "id") Long pago_id)
+	{
+		Map<String, Object> myMap = new HashMap<>();
+		
+		Pago pago = pagoService.findById(pago_id).get();
+		myMap.put("pago", pago);
+		
+		Pagador pagador = pagadorService.findById(pago.getIdPagador()).get();
+		myMap.put("pagador", pagador);
+		
+		ArrayList<Producto> productos = productoService.findAllByPago(pago_id);
+		myMap.put("productos", productos);
+		
+		ArrayList<Transaccion> transacciones = transaccionService.findAllByIdPago(pago_id);
+		myMap.put("transacciones", transacciones);
+		
+		Aplicacion consumidor = consumidorService.findByToken(pago.getIdConsumidor()).get(); 
+		myMap.put("consumidor", consumidor);
+		
+		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
 	}
 
 }

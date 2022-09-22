@@ -52,8 +52,10 @@ public class CronNotificarPago {
 					
 					pagoService.save(pagosNoNotificados.get(i));
 					
+					//SE NOTIFICA EN ESTADO NO PROCESADO
 					restTemplate.postForEntity(urlNotificacion, res, String.class);
 				}
+				
 				
 //				if (pagosNoNotificados.get(i).getIdPreferencia() != null) {		
 //					

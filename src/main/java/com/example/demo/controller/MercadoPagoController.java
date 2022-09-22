@@ -38,6 +38,7 @@ import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.client.preference.PreferencePaymentMethodsRequest;
+import com.mercadopago.client.preference.PreferencePaymentTypeRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
@@ -109,6 +110,9 @@ public class MercadoPagoController {
 		OffsetDateTime dateTimeTo = OffsetDateTime.ofInstant(new Timestamp(oPago.get().getFechaVencimiento()).toInstant(), ZoneId.of("-3"));
 		
 		
+		List<PreferencePaymentTypeRequest> excludedPaymentTypes = new ArrayList<>();
+		excludedPaymentTypes.add(PreferencePaymentTypeRequest.builder().id("ticket").build());
+		
 		//La ORTRA ES ACTUALIZO EL VENCIMIENTO DE MI PAGO, CON EL VENCIMIENTO QUE LE PUSE EN MP
 //		OffsetDateTime dateTimeTo = dateTimeNow.plusMinutes(1);
 //		
@@ -131,7 +135,7 @@ public class MercadoPagoController {
 					.expirationDateFrom(dateTimeNow)
 					.expirationDateTo(dateTimeTo)
 					.externalReference(""+pago_id)
-					.paymentMethods( PreferencePaymentMethodsRequest.builder().installments(1).build() )
+					.paymentMethods( PreferencePaymentMethodsRequest.builder().excludedPaymentTypes(excludedPaymentTypes).installments(1).build() )
 					.build();
 			preference =client.create(request);
 			return new ResponseEntity<>(preference,HttpStatus.OK);
@@ -254,18 +258,6 @@ public class MercadoPagoController {
 	
 	
 	
-	
-	
-	
-	@CrossOrigin(origins = "*")
-	@PostMapping(value = "/process_payment")
-	public ResponseEntity<?> pagoAPI(@RequestBody RespuestaLoca param)
-	{
-		return new ResponseEntity<String>("Retorno", HttpStatus.OK);	
-	}
-	
-	
-	
 	//Devoluciones
 	public static ResponseEntity<?> reembolso (Long pago_id) {
 
@@ -289,6 +281,19 @@ public class MercadoPagoController {
 		
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(respuesta);
 		
+	}
+	
+	
+	
+	
+	
+	
+	
+	@CrossOrigin(origins = "*")
+	@PostMapping(value = "/process_payment")
+	public ResponseEntity<?> pagoAPI(@RequestBody RespuestaLoca param)
+	{
+		return new ResponseEntity<String>("Retorno", HttpStatus.OK);	
 	}
 	
 }

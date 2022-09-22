@@ -2,7 +2,6 @@ package com.example.demo.controller;
 
 import java.net.URI;
 import java.util.Date;
-import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.clasesDecidir.ItemDecidir;
 import com.example.demo.clasesDecidir.MedioPago;
-import com.example.demo.clasesDecidir.RequestDevolucionDecidir;
 import com.example.demo.clasesDecidir.RespuestaPaymentDecidir;
 import com.example.demo.clasesDecidir.RespuestaTokenDecidir;
 import com.example.demo.clasesDecidir.SolicitudDecidir;
@@ -76,6 +74,7 @@ public class DecidirController {
 				//RECORTO LOS PRIMEROS 6 NUMEROS DE LA TARJETA
 				item.bin = resumen.card_number.substring(0, 6);
 				item.amount = oPago.get().getPrecioTotal();
+//				item.amount = (long) -1;
 				item.currency = "ARS";
 				item.installments = (long) 1;
 				item.description = "";
@@ -121,10 +120,15 @@ public class DecidirController {
 			item.site_transaction_id = "decidirPago-"+pago.getId()+"-"+new Date().getTime();
 //			item.site_transaction_id = "decidirPago-"+pago.getId();
 			
+			System.out.println("antes del post");
+			
 //			EJECUTO PAGO
 			HttpEntity<ItemDecidir> entity = new HttpEntity<>(item, headers);
+			
+			//SI EL PAGO SE RECHAZA, la respuesta termina capturada como una excepcion httpCient con codigo 402
 			ResponseEntity<RespuestaPaymentDecidir> resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments", entity, RespuestaPaymentDecidir.class);
 
+			
 //			CREO TRANSACCION Y ACTUALIZO PAGO
 			Transaccion transaccion = new Transaccion();
 			transaccion.setIdMedioPago((long) 2);
@@ -156,23 +160,70 @@ public class DecidirController {
 				//RETORNA TODO PIOLA
 				return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 			}
-//			SE MANEJAN PAGOS RECHAZADOS, EL PAGO SE ACTUALIZO EN LA BASE, Y SE CREO TRANSACCION, PERO NO SE NOTIFICA
+//			ACA HABIA PENSADO QUE SE ENVIEN LOS PAGOS RECHAZADOS SIN NOTIFICAR, PERO ENTRAN COMO ERROR EN LA EXCEPCION, POR LAS DUDAS ESTO NO LO BORRO
 			else
 			{
-				//RETORNA QUE HUBO UN ERROR
-				return ResponseEntity.status(HttpStatus.CONFLICT).body(resPayment.getBody());
+				return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 			}
 			
 			
 			
 			
-//		SE MANEJARIAN ERRORES HACIA EL CREAR PAGO DE DECIDIR
+//		SE MANEJARIAN ERRORES HACIA EL CREAR PAGO DE DECIDIR, TAMBIEN CUANDO LA REQUEST A DECIDIR ME DEVOLVIO PAGO RECHAZADO O EN REVISION, ENTRA COMO ERROR ACA
 		}catch(HttpClientErrorException e)
-		{
+		{	
+			//Si fue rechazado o en revision, actualizo estados y devuelvo error de rechazo
+			if(e.getResponseBodyAsString().contains("\"status\":\"rejected\"") || e.getResponseBodyAsString().contains("\"status\":\"review\""))
+			{
+				String data = e.getResponseBodyAsString();
+				System.out.println(data);
+				String[] a = data.split(",");
+				
+				//Obtengo los datos que me interesan de la respuesta (id y status), super rebuscado, pero bue, por ahora va
+				Long id = (long) 0;
+				String status = "";
+				
+				for(int i = 0; i < a.length; i++)
+				{
+					if(a[i].contains("\"id\"") && !a[i].contains("\"reason\":{\"id\""))
+					{
+						id = Long.parseLong(a[i].split(":")[1]);
+					}
+					if(a[i].contains("\"status\""))
+					{
+						status = a[i].split(":")[1].substring(1);
+						status = status.substring(0, status.length()-1);
+					}
+					if(id != 0 && status != "")
+					{
+						break;
+					}
+				}
+				
+				//Ya obtuve los datos, les hago persistencia enla bbdd, pero no notifico nada
+//				CREO TRANSACCION Y ACTUALIZO PAGO
+				Transaccion transaccion = new Transaccion();
+				transaccion.setIdMedioPago((long) 2);
+				transaccion.setIdPago(pago.getId());
+				transaccion.setIdTransaccion(id);
+				transaccion.setEstado(status);
+				transaccion.setFechaEstado(new Date().getTime());
+				transaccionService.save(transaccion);
+				
+				pago.setEstadoPago(transaccion.getEstado());
+				pago.setFechaEstado(transaccion.getFechaEstado());
+				pagoService.save(pago);
+
+				//Lo devuelvo al front como creado (201), para que no lo reciba como error, pero maneje la excepcion
+				return ResponseEntity.status(HttpStatus.CREATED).body(e.getResponseBodyAsByteArray());
+			}
+			
+			//Devuelvo el error al front
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
 		}
 		catch(Exception e)
 		{
+
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}
 	}
@@ -193,29 +244,30 @@ public class DecidirController {
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
 	}
-
+	
+	
 	//Devolucion de pago decidir
 	public static ResponseEntity<?> devolucionPago(Long decidirId){
 		
-		//		EJECUTO LA DEVOUCION
-				RestTemplate rest = new RestTemplate();
-				HttpHeaders headers = new HttpHeaders();
-				headers.setContentType(MediaType.APPLICATION_JSON);
-				headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
-				
-				ResponseEntity<?> resPayment;
-				
-				try {
-					
-					HttpEntity<?> entity = new HttpEntity<>("{}", headers);
-					resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments/"+decidirId+"/refunds", entity, RespuestaPaymentDecidir.class);
-					
-				}catch(HttpClientErrorException e)
-				{
-					return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
-				}
+//		EJECUTO LA DEVOUCION
+		RestTemplate rest = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
 		
-				
-				return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
-			}
+		ResponseEntity<?> resPayment;
+		
+		try {
+			
+			HttpEntity<?> entity = new HttpEntity<>("{}", headers);
+			resPayment = rest.postForEntity("https://developers.decidir.com/api/v2/payments/"+decidirId+"/refunds", entity, RespuestaPaymentDecidir.class);
+			
+		}catch(HttpClientErrorException e)
+		{
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponseBodyAsByteArray());
+		}
+
+		
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(resPayment.getBody());
+	}
 }

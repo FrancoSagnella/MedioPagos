@@ -13,6 +13,7 @@ public class Pagador {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	private Long dni;
 	private String nombreApellidoRazonSocial;
 	private String correo;
 	
@@ -33,5 +34,11 @@ public class Pagador {
 	}
 	public void setCorreo(String correo) {
 		this.correo = correo;
+	}
+	public Long getDni() {
+		return dni;
+	}
+	public void setDni(Long dni) {
+		this.dni = dni;
 	}
 }

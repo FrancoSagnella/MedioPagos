@@ -19,7 +19,7 @@ public class Producto {
 	private String nombre_producto;
 	private Long cantidad;
 	private Long precio_unitario;
-	private String numero_sap;
+	private String codigo_sap;
 	
 	public Long getId() {
 		return id;
@@ -52,10 +52,11 @@ public class Producto {
 		this.precio_unitario = precio_unitario;
 	}
 	public String getNumero_sap() {
-		return numero_sap;
+		return codigo_sap;
 	}
 	public void setNumero_sap(String numero_sap) {
-		this.numero_sap = numero_sap;
+		this.codigo_sap = numero_sap;
 	}
+	
 	
 }

@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class TransaccionServiceImp implements TransaccionService{
 	
 	@Override
 	@Transactional(readOnly = true)
-	public Iterable<Transaccion> findAllByIdPago(Long idPago) {
+	public ArrayList<Transaccion> findAllByIdPago(Long idPago) {
 		return Transaccion.findAllByIdPago(idPago);
 	}
 

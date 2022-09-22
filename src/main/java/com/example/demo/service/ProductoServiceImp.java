@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ public class ProductoServiceImp implements ProductoService{
 	}
 
 	@Override
-	public Iterable<Producto> findAllByPago(Long pago_id) {
+	public ArrayList<Producto> findAllByPago(Long pago_id) {
 		return productoRepository.findAllByPago(pago_id);
 	}
 
