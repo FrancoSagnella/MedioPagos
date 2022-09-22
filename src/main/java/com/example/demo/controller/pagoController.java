@@ -73,6 +73,9 @@ public class pagoController {
 		Pagador pagador = pagadorService.save(resumen.getPagador());
 		resumen.getPago().setIdPagador(pagador.getId());
 		resumen.getPago().setFechaVencimiento(date.getTime()+10*60*1000);
+		
+		System.out.println(resumen.getPago().getIdAplicacion());
+		
 		Pago pago = pagoService.save(resumen.getPago());
 		
 		int len = resumen.getProducto().size();
@@ -112,7 +115,7 @@ public class pagoController {
 		}
 
 		
-		Optional<Aplicacion> oConsumidor = consumidorService.findByToken(oPago.get().getIdConsumidor());
+		Optional<Aplicacion> oConsumidor = consumidorService.findByToken(oPago.get().getIdAplicacion());
 		Iterable<Producto> oProdutcos = productoService.findAllByPago(oPago.get().getId());
 		Optional<Pagador> oPagador = pagadorService.findById(oPago.get().getIdPagador());
 
@@ -163,7 +166,7 @@ public class pagoController {
 			//En la respuesta le envio el estado de la transaccion, y el id suyo de la transaccion, que yo relacione con el pago
 			RespuestaLoca res = new RespuestaLoca();
 			res.estado = pago.getEstadoPago();
-			res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
+			res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
 			
 			response = rest.postForEntity(uri, res, String.class);
 			System.out.println(response.getBody());
@@ -224,12 +227,12 @@ public class pagoController {
 
 		
 		//Obtengo el pago asociado
-		ArrayList<Pago> pagos = pagoService.findAllByIdConsumidor(request.tokenConsumidor);
+		ArrayList<Pago> pagos = pagoService.findAllByIdAplicacion(request.tokenConsumidor);
 		Pago miPago = new Pago();
 		
 		for(Pago pago : pagos)
 		{
-			Boolean a = pago.getIdTransaccionConsumidor().equals(request.idTransaccion);
+			Boolean a = pago.getIdTransaccionAplicacion().equals(request.idTransaccion);
 			if(a)
 			{
 				miPago = pago;
@@ -309,7 +312,7 @@ public class pagoController {
 		ArrayList<Transaccion> transacciones = transaccionService.findAllByIdPago(pago_id);
 		myMap.put("transacciones", transacciones);
 		
-		Aplicacion consumidor = consumidorService.findByToken(pago.getIdConsumidor()).get(); 
+		Aplicacion consumidor = consumidorService.findByToken(pago.getIdAplicacion()).get(); 
 		myMap.put("consumidor", consumidor);
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);

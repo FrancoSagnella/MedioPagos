@@ -48,7 +48,7 @@ public class CronNotificarPago {
 					String urlNotificacion = (pagosNoNotificados.get(i).getNotificationUrl());
 					
 					res.estado = pagosNoNotificados.get(i).getEstadoPago();
-					res.idTransaccionConsumidor = pagosNoNotificados.get(i).getIdTransaccionConsumidor();
+					res.idTransaccionConsumidor = pagosNoNotificados.get(i).getIdTransaccionAplicacion();
 					
 					pagoService.save(pagosNoNotificados.get(i));
 					

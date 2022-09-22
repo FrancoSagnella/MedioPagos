@@ -13,9 +13,9 @@ public class Pago {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private String idConsumidor;
+	private String idAplicacion;
 	private Long idPagador;
-	private String idTransaccionConsumidor;
+	private String idTransaccionAplicacion;
 	private String estadoPago;
 	private Boolean notificado;
 	private Long fechaEstado;
@@ -32,17 +32,17 @@ public class Pago {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	public String getIdConsumidor() {
-		return idConsumidor;
+	public String getIdAplicacion() {
+		return idAplicacion;
 	}
-	public void setIdConsumidor(String idConsumidor) {
-		this.idConsumidor = idConsumidor;
+	public void setIdAplicacion(String idAplicacion) {
+		this.idAplicacion = idAplicacion;
 	}
-	public String getIdTransaccionConsumidor() {
-		return idTransaccionConsumidor;
+	public String getIdTransaccionAplicacion() {
+		return idTransaccionAplicacion;
 	}
-	public void setIdTransaccionConsumidor(String idTransaccionConsumidor) {
-		this.idTransaccionConsumidor = idTransaccionConsumidor;
+	public void setIdTransaccionAplicacion(String idTransaccionAplicacion) {
+		this.idTransaccionAplicacion = idTransaccionAplicacion;
 	}
 	public Long getFechaCreacion() {
 		return fechaCreacion;

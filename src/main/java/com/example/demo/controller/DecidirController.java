@@ -152,7 +152,7 @@ public class DecidirController {
 				
 				RespuestaLoca res = new RespuestaLoca();
 				res.estado = pago.getEstadoPago();
-				res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
+				res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
 				
 				ResponseEntity<String> response = rest.postForEntity(uri, res, String.class);
 				System.out.println(response.getBody());

@@ -210,7 +210,7 @@ public class MercadoPagoController {
 				//En la respuesta le envio el estado de la transaccion, y el id suyo de la transaccion, que yo relacione con el pago
 				RespuestaLoca res = new RespuestaLoca();
 				res.estado = trans.getEstado();
-				res.idTransaccionConsumidor = pago.getIdTransaccionConsumidor();
+				res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
 				
 				response = rest.postForEntity(uri, res, String.class);
 				System.out.println(response.getBody());

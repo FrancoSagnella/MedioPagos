@@ -24,8 +24,8 @@ public class PagoServiceImp implements PagoService{
 	
 	@Override
 	@Transactional(readOnly = true)
-	public ArrayList<Pago> findAllByIdConsumidor(String empresa) {
-		return pagoRepository.findAllByIdConsumidor(empresa);
+	public ArrayList<Pago> findAllByIdAplicacion(String empresa) {
+		return pagoRepository.findAllByIdAplicacion(empresa);
 	}
 
 	@Override
@@ -36,8 +36,8 @@ public class PagoServiceImp implements PagoService{
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<Pago> findByIdConsumidor(String id) {
-		return pagoRepository.findByIdConsumidor(id);
+	public Optional<Pago> findByIdAplicacion(String id) {
+		return pagoRepository.findByIdAplicacion(id);
 	}
 	
 	@Override
