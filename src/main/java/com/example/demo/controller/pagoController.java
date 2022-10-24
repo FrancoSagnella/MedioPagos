@@ -90,7 +90,7 @@ public class pagoController {
 		//Basicamente un stdClass, para poder retornar un objeto metiendole asi medio dinamico los atributos, pa retornar solo lo que quiero
 		//Porque sino no se me caste a json xd
 		Map<String, String> myMap = new HashMap<>();
-		myMap.put("url", "http://localhost:4200/principal/"+pago.getId());
+		myMap.put("url", System.getProperty("frontUrl")+pago.getId());
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
 	}

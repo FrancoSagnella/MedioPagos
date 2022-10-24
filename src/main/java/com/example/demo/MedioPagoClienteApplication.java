@@ -14,6 +14,10 @@ import com.mercadopago.MercadoPagoConfig;
 public class MedioPagoClienteApplication {
 
 	public static void main(String[] args) {
+
+//		CONFIGURO ENVIRONMENT PROPERTIES
+		System.setProperty("frontUrl", "http://localhost:4200/principal/");
+
 		SpringApplication.run(MedioPagoClienteApplication.class, args);
 		MercadoPagoConfig.setAccessToken("TEST-1016222742358593-062310-6eaddcc1b5893e037fa1281c4a6abe16-683211147");//DE JULI
 //		MercadoPagoConfig.setAccessToken("TEST-7629534519570845-072515-b85ce1449267138aa659cbf2a59bf991-306891134");//MIA
