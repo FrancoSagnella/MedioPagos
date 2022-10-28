@@ -99,9 +99,9 @@ public class MercadoPagoController {
 		
 		PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest
 				   .builder()
-			       .success("medio-pagos.herokuapp.com/api/pagos/MercadoPago/respuesta_mercadoPago/"+pago_id)
-			       .pending("medio-pagos.herokuapp.com/api/pagos/MercadoPago/respuesta_mercadoPago/"+pago_id)
-			       .failure("medio-pagos.herokuapp.com/api/pagos/MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .success(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .pending(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .failure(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
 			       .build();
 		
 		OffsetDateTime dateTimeNow = OffsetDateTime.now();	
@@ -130,7 +130,7 @@ public class MercadoPagoController {
 					.backUrls(backUrls)
 					.autoReturn("approved")
 					.binaryMode(true)
-					.notificationUrl("https://medio-pagos.herokuapp.com/api/pagos/MercadoPago/notificacion_mercadoPago/"+pago_id)
+					.notificationUrl(System.getProperty("backUrl")+"MercadoPago/notificacion_mercadoPago/"+pago_id)
 					.expires(true)
 					.expirationDateFrom(dateTimeNow)
 					.expirationDateTo(dateTimeTo)

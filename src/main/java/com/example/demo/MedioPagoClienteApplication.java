@@ -17,6 +17,8 @@ public class MedioPagoClienteApplication {
 
 //		CONFIGURO ENVIRONMENT PROPERTIES
 		System.setProperty("frontUrl", "http://correo-app-frontend-correo-argentino.apps.lab.okd.local/");
+		System.setProperty("backUrl", "http://correo-app-backend2-correo-argentino.apps.lab.okd.local/api/pagos/");
+
 
 		SpringApplication.run(MedioPagoClienteApplication.class, args);
 		MercadoPagoConfig.setAccessToken("TEST-1016222742358593-062310-6eaddcc1b5893e037fa1281c4a6abe16-683211147");//DE JULI
