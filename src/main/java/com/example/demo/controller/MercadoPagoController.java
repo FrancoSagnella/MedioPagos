@@ -240,10 +240,10 @@ public class MercadoPagoController {
 
 		//Aca ya se actualizo mi base y se mando respuesta al cliente, redirijo a mi app a la pantalla de resultado
 		if(status.equals("approved")){
-			return new ModelAndView("redirect:"+"http://localhost:4200/confirmacion/aprobado/"+pago_id+"/0");			
+			return new ModelAndView("redirect:"+System.getProperty("frontUrl")+"confirmacion/aprobado/"+pago_id+"/0");			
 		}
 		else {
-			return new ModelAndView("redirect:"+"http://localhost:4200/principal/"+pago_id);
+			return new ModelAndView("redirect:"+System.getProperty("frontUrl")+"principal/"+pago_id);
 		}
 
 	}
