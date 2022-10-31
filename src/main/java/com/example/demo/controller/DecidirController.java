@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -46,6 +48,12 @@ public class DecidirController {
 	@Autowired
 	private TransaccionService transaccionService;
 	
+	@Autowired
+	private Environment environment;
+	
+	@Autowired
+	private static Environment staticEnvironment;
+	
 	@CrossOrigin(origins = "*")
 	@PostMapping(value = "/token/{id}")
 	public ResponseEntity<?> createToken (@PathVariable(value = "id") Long pagoId, @RequestBody SolicitudDecidir resumen){
@@ -62,7 +70,7 @@ public class DecidirController {
 			RestTemplate rest = new RestTemplate();
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
-			headers.set("apikey", "4ae76f00234843d1af5994ed4674fd76");
+			headers.set("apikey", environment.getProperty("decidir.public.token"));
 			HttpEntity<SolicitudDecidir> entity = new HttpEntity<>(resumen, headers);
 			ResponseEntity<RespuestaTokenDecidir> resToken = rest.postForEntity("https://developers.decidir.com/api/v2/tokens", entity, RespuestaTokenDecidir.class);
 			
@@ -113,7 +121,7 @@ public class DecidirController {
 			RestTemplate rest = new RestTemplate();
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
-			headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
+			headers.set("apikey", environment.getProperty("decidir.private.token"));
 			
 //			AL ITEM A PAGAR LE AGREGO EL TOKEN Y SITE TRANSACTION
 			item.token = token.id;
@@ -237,7 +245,7 @@ public class DecidirController {
 		RestTemplate rest = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set("apikey", "4ae76f00234843d1af5994ed4674fd76");
+		headers.set("apikey", environment.getProperty("decidir.public.token"));
 
 		HttpEntity<Void> entity = new HttpEntity<>(headers);
 		ResponseEntity<MedioPago[]> resPayment = rest.exchange("https://developers.decidir.com/api/v2/payment-methods/1", HttpMethod.GET, entity, MedioPago[].class);
@@ -253,7 +261,7 @@ public class DecidirController {
 		RestTemplate rest = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set("apikey", "3891f691dc4f40b6941a25a68d17c7f4");
+		headers.set("apikey", staticEnvironment.getProperty("decidir.private.token"));
 		
 		ResponseEntity<?> resPayment;
 		

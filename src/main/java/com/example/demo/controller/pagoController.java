@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -57,6 +59,9 @@ public class pagoController {
 	@Autowired
 	private TransaccionService transaccionService;
 	
+	@Autowired
+	private Environment environment;
+	
 	// Create a new pago
 	@CrossOrigin(origins = "*")
 	@PostMapping
@@ -90,7 +95,7 @@ public class pagoController {
 		//Basicamente un stdClass, para poder retornar un objeto metiendole asi medio dinamico los atributos, pa retornar solo lo que quiero
 		//Porque sino no se me caste a json xd
 		Map<String, String> myMap = new HashMap<>();
-		myMap.put("url", System.getProperty("frontUrl")+"principal/"+pago.getId());
+		myMap.put("url", environment.getProperty("front.url") + "principal/"+pago.getId());
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
 	}

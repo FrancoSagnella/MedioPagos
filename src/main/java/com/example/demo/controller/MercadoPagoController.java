@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -57,6 +59,8 @@ public class MercadoPagoController {
 	@Autowired
 	private TransaccionService transaccionService;
 	
+	@Autowired
+	private Environment env;
 	
 //	MERCADOPAGO
 	
@@ -99,9 +103,9 @@ public class MercadoPagoController {
 		
 		PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest
 				   .builder()
-			       .success(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
-			       .pending(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
-			       .failure(System.getProperty("backUrl")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .success(env.getProperty("back.url")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .pending(env.getProperty("back.url")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
+			       .failure(env.getProperty("back.url")+"MercadoPago/respuesta_mercadoPago/"+pago_id)
 			       .build();
 		
 		OffsetDateTime dateTimeNow = OffsetDateTime.now();	
@@ -130,7 +134,7 @@ public class MercadoPagoController {
 					.backUrls(backUrls)
 					.autoReturn("approved")
 					.binaryMode(true)
-					.notificationUrl(System.getProperty("backUrl")+"MercadoPago/notificacion_mercadoPago/"+pago_id)
+					.notificationUrl(env.getProperty("back.url")+"MercadoPago/notificacion_mercadoPago/"+pago_id)
 					.expires(true)
 					.expirationDateFrom(dateTimeNow)
 					.expirationDateTo(dateTimeTo)
@@ -240,10 +244,10 @@ public class MercadoPagoController {
 
 		//Aca ya se actualizo mi base y se mando respuesta al cliente, redirijo a mi app a la pantalla de resultado
 		if(status.equals("approved")){
-			return new ModelAndView("redirect:"+System.getProperty("frontUrl")+"confirmacion/aprobado/"+pago_id+"/0");			
+			return new ModelAndView("redirect:"+env.getProperty("front.url")+"confirmacion/aprobado/"+pago_id+"/0");			
 		}
 		else {
-			return new ModelAndView("redirect:"+System.getProperty("frontUrl")+"principal/"+pago_id);
+			return new ModelAndView("redirect:"+env.getProperty("front.url")+"principal/"+pago_id);
 		}
 
 	}
