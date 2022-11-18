@@ -51,10 +51,10 @@ public class Producto {
 	public void setPrecio_unitario(Long precio_unitario) {
 		this.precio_unitario = precio_unitario;
 	}
-	public String getNumero_sap() {
+	public String getCodigo_sap() {
 		return codigo_sap;
 	}
-	public void setNumero_sap(String numero_sap) {
+	public void setCodigo_sap(String numero_sap) {
 		this.codigo_sap = numero_sap;
 	}
 	

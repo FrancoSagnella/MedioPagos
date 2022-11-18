@@ -11,4 +11,5 @@ public interface PagoRepository extends JpaRepository<Pago, Long>{
 	Optional<Pago> findByIdAplicacion(String idConsumidor);
 	ArrayList<Pago> findAllByIdAplicacion(String idConsumidor);
 	ArrayList<Pago> findByNotificado(Boolean notificado);
+	Optional<Pago> findByIdTransaccionAplicacion(String idTransaccionAplicacion);
 }

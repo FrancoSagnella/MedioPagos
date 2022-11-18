@@ -1,5 +1,7 @@
 package com.example.demo.entities;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,7 +16,7 @@ public class Pago {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String idAplicacion;
-	private Long idPagador;
+	private UUID idPagador;
 	private String idTransaccionAplicacion;
 	private String estadoPago;
 	private Boolean notificado;
@@ -62,10 +64,10 @@ public class Pago {
 	public void setBackUrl(String backUrl) {
 		this.backUrl = backUrl;
 	}
-	public Long getIdPagador() {
+	public UUID getIdPagador() {
 		return idPagador;
 	}
-	public void setIdPagador(Long idPagador) {
+	public void setIdPagador(UUID idPagador) {
 		this.idPagador = idPagador;
 	}
 	public String getEstadoPago() {

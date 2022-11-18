@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +40,7 @@ import com.example.demo.service.ProductoService;
 import com.example.demo.service.TransaccionService;
 
 @RestController
-@RequestMapping("/api/pagos")
+@RequestMapping("/pagos")
 public class pagoController {
 	
 	private Middlewares middleware = new Middlewares();
@@ -67,38 +68,82 @@ public class pagoController {
 	@PostMapping
 	public ResponseEntity<?> create (@RequestBody Resumen resumen){
 		
-//		TODO Validar el token del consumidor
-//		VALIDAR SI EL PAGO YA EXISTE, SIMPLEMENTE DEVUELVO LA URL, SI NO EXISTE, LE HAGO EL ALTA
-		
-		resumen.getPago().setEstadoPago("pendiente");
-		resumen.getPago().setNotificado(false);
-		Date date = new Date();
-		resumen.getPago().setFechaCreacion(date.getTime());
-		resumen.getPago().setFechaEstado(date.getTime());
-		Pagador pagador = pagadorService.save(resumen.getPagador());
-		resumen.getPago().setIdPagador(pagador.getId());
-		resumen.getPago().setFechaVencimiento(date.getTime()+10*60*1000);
-		
-		System.out.println(resumen.getPago().getIdAplicacion());
-		
-		Pago pago = pagoService.save(resumen.getPago());
-		
-		int len = resumen.getProducto().size();
-		for(int i = 0; i < len; i++)
-		{
-			Producto prod = resumen.getProducto().get(i);
-			prod.setPago(pago.getId());
-			resumen.getProducto().set(i, prod);
-			productoService.save(prod);
-		}
+//		Validar el token de aplicacion
+//		Validar que carrito ya existe
+		Optional<Pago> oPago = pagoService.findByIdTransaccionAplicacion(resumen.getPago().getIdTransaccionAplicacion());
+		try {
+			middleware.verificarVencimiento(resumen.getPago());
+			boolean aux = middleware.verificarCarrito(oPago);
+			String retUrl;
+			
+			if(aux)
+			{
+//			Validar pagador (Si no existe (valida con dni) se crea), sino, recupero el id del pagador que ya existe
+				Pagador pagador;
+				if(!Pagador.pagadorExists(resumen.getPagador().getDni(), resumen.getPagador().getTipoDni(), pagadorService.findAll()))
+				{
+					resumen.getPagador().setId(UUID.randomUUID());
+					pagador = pagadorService.save(resumen.getPagador());
+				}
+				else
+				{
+					System.out.println(resumen.getPagador().getDni());
+					pagador = pagadorService.findByDniAndTipodni(resumen.getPagador().getDni(), resumen.getPagador().getTipoDni()).get();
+				}
+				
+//			Crea pago
+				resumen.getPago().setEstadoPago("pendiente");
+				resumen.getPago().setNotificado(false);
+				Date date = new Date();
+				resumen.getPago().setFechaCreacion(date.getTime());
+				resumen.getPago().setFechaEstado(date.getTime());
+				resumen.getPago().setIdPagador(pagador.getId());
+				resumen.getPago().setFechaVencimiento(date.getTime()+10*60*1000);
+				
+				System.out.println(resumen.getPago().getIdAplicacion());
+				
+				Pago pago = pagoService.save(resumen.getPago());
+				
+				int len = resumen.getProducto().size();
+				for(int i = 0; i < len; i++)
+				{
+					Producto prod = resumen.getProducto().get(i);
+					System.out.println(prod.getCodigo_sap());
+					prod.setPago(pago.getId());
+					resumen.getProducto().set(i, prod);
+					productoService.save(prod);
+				}
+				
+				retUrl = "principal/"+pago.getId();
+			}
+			else {
+				retUrl = "principal."+oPago.get().getId();
+			}
 
-		//Basicamente un stdClass, para poder retornar un objeto metiendole asi medio dinamico los atributos, pa retornar solo lo que quiero
-		//Porque sino no se me caste a json xd
-		Map<String, String> myMap = new HashMap<>();
-		myMap.put("url", environment.getProperty("front.url") + "principal/"+pago.getId());
-		
-		return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
+			//Basicamente un stdClass, para poder retornar un objeto metiendole asi medio dinamico los atributos, pa retornar solo lo que quiero
+			Map<String, String> myMap = new HashMap<>();
+			myMap.put("url", environment.getProperty("front.url") + retUrl);
+			
+			return ResponseEntity.status(HttpStatus.CREATED).body(myMap);
+			
+		}catch(MiddlewareException e)
+		{
+			//Si se verifico carrito, devuelvo con estado y id
+			if(e.type.equals("carrito existente")) {
+				Map<String, String> myMap = new HashMap<>();
+				myMap.put("error", e.error);
+				myMap.put("estadoPago", oPago.get().getEstadoPago());
+				myMap.put("idTransaccionAplicacion", oPago.get().getIdTransaccionAplicacion());
+				
+				return ResponseEntity.status(HttpStatus.CONFLICT).body(myMap);
+			}
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.customError());
+		}
 	}
+	
+	
+	
+	
 	
 	// Read a pago
 	@CrossOrigin(origins = "*")
@@ -131,6 +176,29 @@ public class pagoController {
 		resumen.setPagador(oPagador.get());
 
 		return ResponseEntity.ok(resumen); 
+	}
+	
+	@CrossOrigin(origins = "*")
+	@GetMapping("/verificar-pago/{idTransaccionAplicacion}")
+	public ResponseEntity<?> verificarPago (@PathVariable(value = "idTransaccionAplicacion") String pagoId){
+
+		Optional<Pago> oPago = pagoService.findByIdTransaccionAplicacion(pagoId);
+		if(oPago.isPresent()) {
+			if( oPago.get().getNotificado() && oPago.get().getFechaVencimiento() < new Date().getTime()) {
+				RespuestaLoca res = new RespuestaLoca();
+				res.estado = oPago.get().getEstadoPago();
+				res.idPagador = oPago.get().getIdPagador();
+				res.idTransaccionConsumidor = oPago.get().getIdTransaccionAplicacion();
+				
+				return ResponseEntity.status(HttpStatus.CREATED).body(res);
+			}
+			else {
+				return ResponseEntity.status(HttpStatus.CREATED).body("El pago solicitado aun esta siendo procesado");
+			}
+		}
+		else {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("El pago solicitado no existe");
+		}
 	}
 	
 	@CrossOrigin(origins = "*")
@@ -172,6 +240,7 @@ public class pagoController {
 			RespuestaLoca res = new RespuestaLoca();
 			res.estado = pago.getEstadoPago();
 			res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
+			res.idPagador = pago.getIdPagador();
 			
 			response = rest.postForEntity(uri, res, String.class);
 			System.out.println(response.getBody());

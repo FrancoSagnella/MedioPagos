@@ -59,4 +59,9 @@ public class PagoServiceImp implements PagoService{
 		pagoRepository.deleteById(id);
 	}
 	
+	@Override
+	@Transactional
+	public Optional<Pago> findByIdTransaccionAplicacion(String idTransaccionAplicacion){
+		return pagoRepository.findByIdTransaccionAplicacion(idTransaccionAplicacion);
+	}
 }

@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class PagadorServiceImp implements PagadorService{
 	}
 
 	@Override
-	public Optional<Pagador> findById(Long id) {
+	public Optional<Pagador> findById(UUID id) {
 		return pagadorRepository.findById(id);
 	}
 
@@ -30,8 +31,12 @@ public class PagadorServiceImp implements PagadorService{
 	}
 
 	@Override
-	public void deleteById(Long id) {
+	public void deleteById(UUID id) {
 		pagadorRepository.deleteById(id);
+	}
+	
+	public Optional<Pagador> findByDniAndTipodni(Long dni, String tipodni){
+		return pagadorRepository.findByDniAndTipodni(dni, tipodni);
 	}
 	
 }

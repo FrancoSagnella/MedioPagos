@@ -48,7 +48,7 @@ import com.mercadopago.resources.payment.PaymentRefund;
 import com.mercadopago.resources.preference.Preference;
 
 @RestController
-@RequestMapping("/api/pagos/MercadoPago")
+@RequestMapping("/pagos/MercadoPago")
 public class MercadoPagoController {
 
 	private Middlewares middleware = new Middlewares();
@@ -189,7 +189,7 @@ public class MercadoPagoController {
 			trans.setEstado(responseMP.getBody().status);
 			trans.setFechaEstado(date.getTime());
 			trans.setIdTransaccion(responseMP.getBody().id);
-			trans.setIdMedioPago((long) 1);
+			trans.setIdMedioPago(1);
 			transaccionService.save(trans);
 			
 			//Actualizo el estado del pago tambien (con el mismo estado que me trajo la transaccion, asi despues, cuando se ejecute el cron, lo va a poder notificar)
@@ -215,6 +215,7 @@ public class MercadoPagoController {
 				RespuestaLoca res = new RespuestaLoca();
 				res.estado = trans.getEstado();
 				res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
+				res.idPagador = pago.getIdPagador();
 				
 				response = rest.postForEntity(uri, res, String.class);
 				System.out.println(response.getBody());

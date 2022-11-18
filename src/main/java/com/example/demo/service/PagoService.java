@@ -14,4 +14,5 @@ public interface PagoService {
 	public ArrayList<Pago> findByNotificado(Boolean notificado);
 	public Pago save(Pago pago);
 	public void deleteById(Long id);
+	Optional<Pago> findByIdTransaccionAplicacion(String idTransaccionAplicacion);
 }

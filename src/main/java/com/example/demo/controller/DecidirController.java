@@ -37,7 +37,7 @@ import com.example.demo.service.PagoService;
 import com.example.demo.service.TransaccionService;
 
 @RestController
-@RequestMapping(value = "/api/pagos/decidir")
+@RequestMapping(value = "/pagos/decidir")
 public class DecidirController {
 
 	private Middlewares middleware = new Middlewares();
@@ -139,7 +139,16 @@ public class DecidirController {
 			
 //			CREO TRANSACCION Y ACTUALIZO PAGO
 			Transaccion transaccion = new Transaccion();
-			transaccion.setIdMedioPago((long) 2);
+			
+			Integer medioPago = 2;
+			if(item.payment_method_id == 1) {
+				medioPago = 2;
+			}
+			else if(item.payment_method_id == 104) {
+				medioPago = 3;
+			}
+			
+			transaccion.setIdMedioPago(medioPago);
 			transaccion.setIdPago(pago.getId());
 			transaccion.setIdTransaccion(resPayment.getBody().id);
 			transaccion.setEstado(resPayment.getBody().status);
@@ -161,6 +170,7 @@ public class DecidirController {
 				RespuestaLoca res = new RespuestaLoca();
 				res.estado = pago.getEstadoPago();
 				res.idTransaccionConsumidor = pago.getIdTransaccionAplicacion();
+				res.idPagador = pago.getIdPagador();
 				
 				ResponseEntity<String> response = rest.postForEntity(uri, res, String.class);
 				System.out.println(response.getBody());
@@ -211,7 +221,7 @@ public class DecidirController {
 				//Ya obtuve los datos, les hago persistencia enla bbdd, pero no notifico nada
 //				CREO TRANSACCION Y ACTUALIZO PAGO
 				Transaccion transaccion = new Transaccion();
-				transaccion.setIdMedioPago((long) 2);
+				transaccion.setIdMedioPago(2);
 				transaccion.setIdPago(pago.getId());
 				transaccion.setIdTransaccion(id);
 				transaccion.setEstado(status);
